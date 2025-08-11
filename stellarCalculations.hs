@@ -1,4 +1,18 @@
 -- Constants
+secondsInAMinute :: Floating a => a
+secondsInAMinute = 60
+
+secondsInAnHour :: Floating a => a
+secondsInAnHour = 3600
+
+secondsInADay :: Floating a => a
+secondsInADay = 86400
+
+secondsInAWeek :: Floating a => a
+secondsInAWeek = 60480
+
+secondsInAYear :: Floating a => a
+secondsInAYear = 31557600
 
 au :: Floating a => a
 au = 1.496e11 -- meters
@@ -9,8 +23,11 @@ earthMass = 5.972e24 -- kg
 solarMass :: Floating a => a
 solarMass = 1.989e30 -- kg
 
+solarLuminosity :: Floating a => a
+solarLuminosity = 1.0
+
 milkyWaySolarMasses :: Floating a => a
-milkyWaySolarMasses = 1.5e12 -- kg
+milkyWaySolarMasses = 1.5e12 -- solar masses
 
 gravitationalConstant :: Floating a => a
 gravitationalConstant = 6.674e-11
@@ -23,6 +40,9 @@ speedOfLight = 299792458 -- m/s
 
 stefanBoltzmannConstant :: Floating a => a
 stefanBoltzmannConstant = 5.67e-8 -- W m^-2 K^-4
+
+hubblesConstant :: Floating a => a
+hubblesConstant = 674e2 -- m/s/Mpc (as observed by the Planck satellite)
 
 -- Utility functions
 
@@ -39,29 +59,25 @@ convertPeriod :: Floating a => Char -> a -> a
 convertPeriod unit periodInSeconds =
   case unit of
     's' -> periodInSeconds
-    'm' -> periodInSeconds / 60
-    'h' -> (periodInSeconds / 60) / 60
-    'd' -> ((periodInSeconds / 60) / 60) / 24
-    'w' -> (((periodInSeconds / 60) / 60) / 24) / 7
-    'y' -> (periodInSeconds / 31557600)
+    'm' -> periodInSeconds / secondsInAMinute
+    'h' -> periodInSeconds / secondsInAnHour
+    'd' -> periodInSeconds / secondsInADay
+    'w' -> periodInSeconds / secondsInAWeek
+    'y' -> periodInSeconds / secondsInAYear
     _   -> periodInSeconds
 
 -- Swarzschild Radius
 
-schwarzschildRadius :: (Floating a, Show a) => a -> String
-schwarzschildRadius mass = 
-  show ((2 * gravitationalConstant * mass) / speedOfLight^2) ++ " meters."
+schwarzschildRadius :: Floating a => a -> a
+schwarzschildRadius mass = (2 * gravitationalConstant * mass) / speedOfLight^2
 
 -- How many Earth masses
-
-howManyEarthMasses :: (Floating a, Show a) => a -> String
-howManyEarthMasses mass = 
-  show (mass / earthMass) ++ " Earth masses."
+howManyEarthMasses :: Floating a => a -> a
+howManyEarthMasses mass = mass / earthMass
 
 -- How many AU
-
-howManyAU :: (Floating a, Show a) => a -> String
-howManyAU meters = show (meters / au) ++ " AU."
+howManyAU :: Floating a => a -> a
+howManyAU meters = meters / au
 
 -- Galaxy mass estimator
 
@@ -101,3 +117,29 @@ calculateTidalForce largerObjectMass smallerObjectMass
 calculateLuminosity :: Floating a => a -> a -> a
 calculateLuminosity starRadius starSurfaceTemperature =
   (4 * pi * starRadius^2 * stefanBoltzmannConstant * starSurfaceTemperature^4)
+
+-- Hubble Expansion
+
+calculateHubbleExpansion :: Floating a => a -> a
+calculateHubbleExpansion properDistance = hubblesConstant * properDistance
+
+-- Stellar Mass From Luminosity
+
+calculateStellarMassFromLuminosity :: Floating a => a -> a
+calculateStellarMassFromLuminosity luminosity = solarMass * (luminosity / solarLuminosity) ** (1/3.5)
+
+-- Gravitational Time Dilation
+
+calculateGravitationalTimeDilationFactor :: Floating a => a -> a -> a
+calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter =
+  sqrt (1 - (2 * gravitationalConstant * mass) / (distanceFromObjectCenter * speedOfLight^2))
+
+calculateDilatedTime :: Floating a => a -> a -> a -> a
+calculateDilatedTime timeInterval mass distanceFromObjectCenter =
+  timeInterval * calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter
+
+-- Lorentz Factor
+
+calculateLorentzFactor :: Floating a => a -> a
+calculateLorentzFactor speedOfMovingObserver =
+  1 / sqrt(1 - (speedOfMovingObserver^2/speedOfLight^2))
