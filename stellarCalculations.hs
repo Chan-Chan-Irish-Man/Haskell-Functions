@@ -13,6 +13,8 @@ type Factor = Double
 type Density = Double
 type Quantity = Double
 type Wavelength = Double
+type Angle = Double
+type Brightness = Double
 type Unit = Char
 
 -- Constants
@@ -113,6 +115,10 @@ toAU :: Distance -> Quantity
 toAU meters =
   meters / au
 
+lightYearsToParsec :: Distance -> Distance
+lightYearsToParsec lightYears =
+  lightYears * 3.26156
+
 -- Swarzschild Radius
 
 calculateSchwarzschildRadius :: Mass -> Maybe Distance
@@ -173,7 +179,7 @@ calculateTidalForce largerObjectMass smallerObjectMass
                smallerObjectMass * differenceBetweenTwoPointsOnSmallerObject)
                / distanceBetweenCenterOfBothObjects^3)
 
--- Luminosity
+-- Stefan-Boltzmann Law for Luminosity
 
 calculateLuminosity :: Distance -> Temperature -> Maybe Luminosity
 calculateLuminosity starRadius starSurfaceTemperature = do
@@ -190,6 +196,15 @@ calculateLuminosityInSolarUnits starRadius starSurfaceTemperature = do
 
   luminosity <- calculateLuminosity starRadius starSurfaceTemperature
   return (luminosity / solarLuminosity)
+
+-- Stefan-Boltzmann Law for Radius
+
+calculateStellarRadius :: Luminosity -> Temperature -> Maybe Distance
+calculateStellarRadius luminosity surfaceTemperature = do
+  guard (luminosity > 0)
+  guard (surfaceTemperature > 0)
+
+  return (sqrt(luminosity / (4 * pi * stefanBoltzmannConstant * surfaceTemperature^4)))
 
 -- Hubble Expansion
 
@@ -319,3 +334,42 @@ calculatePeakWavelength blackBodyTemperature = do
   guard(blackBodyTemperature > 0)
 
   return (blackBodyTemperature / wienDisplacementConstant)
+
+-- Relativistic Doppler Shift
+
+calculateRelativisticDopplerShift :: Wavelength -> Velocity -> Maybe Wavelength
+calculateRelativisticDopplerShift sourceWavelength wavelengthRelativeVelocity = do
+  guard(wavelengthRelativeVelocity <= speedOfLight)
+
+  return (sourceWavelength * sqrt((1 + wavelengthRelativeVelocity / speedOfLight) / 
+                                  (1 - wavelengthRelativeVelocity / speedOfLight)))
+
+-- Stellar Parallax
+
+calculateStellarParallax :: Angle -> Maybe Distance
+calculateStellarParallax parallaxAngle = do
+  guard(parallaxAngle > 0)
+
+  return (1 / parallaxAngle)
+
+-- Absolute Magnitude from Apparent Magnitude
+
+calculateAbsoluteMagnitudeFromApparentMagnitude :: Brightness -> Distance -> Maybe Brightness
+calculateAbsoluteMagnitudeFromApparentMagnitude apparentMagnitude distanceInParsecs = do
+  guard(distanceInParsecs > 0)
+  
+  let log10Distance = logBase 10 distanceInParsecs
+  
+  return (apparentMagnitude - 5 * log10Distance + 5)
+
+-- Vis-Viva Equation
+
+calculateVisaViva :: Mass -> Distance -> Distance -> Maybe Velocity
+calculateVisaViva centralMass distanceFromCenterOfCentralMassAndOrbitingBody semiMajorAxis = do
+  guard(centralMass > 0)
+  guard(distanceFromCenterOfCentralMassAndOrbitingBody > 0)
+  guard(semiMajorAxis > 0)
+
+  return (sqrt(gravitationalConstant * centralMass * 
+         (2 / distanceFromCenterOfCentralMassAndOrbitingBody -
+         1 / semiMajorAxis)))
