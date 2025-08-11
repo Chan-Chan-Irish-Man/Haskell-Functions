@@ -26,6 +26,9 @@ solarMass = 1.989e30 -- kg
 solarLuminosity :: Floating a => a
 solarLuminosity = 1.0
 
+sunLifetimeInYears :: Floating a => a
+sunLifetimeInYears = 1e10
+
 milkyWaySolarMasses :: Floating a => a
 milkyWaySolarMasses = 1.5e12 -- solar masses
 
@@ -47,13 +50,16 @@ hubblesConstant = 674e2 -- m/s/Mpc (as observed by the Planck satellite)
 -- Utility functions
 
 lightYearsToMeters :: Floating a => a -> a
-lightYearsToMeters lightYears = lightYears * lightYearInMeters
+lightYearsToMeters lightYears =
+  lightYears * lightYearInMeters
 
 kgToSolarMass :: Floating a => a -> a
-kgToSolarMass kg = kg / solarMass
+kgToSolarMass kg =
+  kg / solarMass
 
 solarMassesToMilkyWayMasses :: Floating a => a -> a
-solarMassesToMilkyWayMasses solarMasses = solarMasses / milkyWaySolarMasses
+solarMassesToMilkyWayMasses solarMasses =
+  solarMasses / milkyWaySolarMasses
 
 convertPeriod :: Floating a => Char -> a -> a
 convertPeriod unit periodInSeconds =
@@ -66,18 +72,19 @@ convertPeriod unit periodInSeconds =
     'y' -> periodInSeconds / secondsInAYear
     _   -> periodInSeconds
 
+howManyEarthMasses :: Floating a => a -> a
+howManyEarthMasses mass =
+  mass / earthMass
+
+howManyAU :: Floating a => a -> a
+howManyAU meters =
+  meters / au
+
 -- Swarzschild Radius
 
-schwarzschildRadius :: Floating a => a -> a
-schwarzschildRadius mass = (2 * gravitationalConstant * mass) / speedOfLight^2
-
--- How many Earth masses
-howManyEarthMasses :: Floating a => a -> a
-howManyEarthMasses mass = mass / earthMass
-
--- How many AU
-howManyAU :: Floating a => a -> a
-howManyAU meters = meters / au
+calculateSchwarzschildRadius :: Floating a => a -> a
+calculateSchwarzschildRadius mass =
+  (2 * gravitationalConstant * mass) / speedOfLight^2
 
 -- Galaxy mass estimator
 
@@ -121,12 +128,20 @@ calculateLuminosity starRadius starSurfaceTemperature =
 -- Hubble Expansion
 
 calculateHubbleExpansion :: Floating a => a -> a
-calculateHubbleExpansion properDistance = hubblesConstant * properDistance
+calculateHubbleExpansion properDistance =
+  hubblesConstant * properDistance
 
 -- Stellar Mass From Luminosity
 
 calculateStellarMassFromLuminosity :: Floating a => a -> a
-calculateStellarMassFromLuminosity luminosity = solarMass * (luminosity / solarLuminosity) ** (1/3.5)
+calculateStellarMassFromLuminosity luminosity =
+  solarMass * (luminosity / solarLuminosity) ** (1/3.5)
+
+-- Luminosity from Stellar Mass
+
+calculateStellarLuminosityFromMass :: Floating a => a -> a
+calculateStellarLuminosityFromMass mass =
+  solarLuminosity * (mass / solarMass) ** 3.5
 
 -- Gravitational Time Dilation
 
@@ -143,3 +158,35 @@ calculateDilatedTime timeInterval mass distanceFromObjectCenter =
 calculateLorentzFactor :: Floating a => a -> a
 calculateLorentzFactor speedOfMovingObserver =
   1 / sqrt(1 - (speedOfMovingObserver^2/speedOfLight^2))
+
+-- Roche Limit
+
+calculateRocheLimit :: Floating a => a -> a -> a -> a
+calculateRocheLimit primaryBodyRadius primaryBodyDensity satelliteDensity =
+  primaryBodyRadius * ((2 * primaryBodyDensity) / satelliteDensity)^(1/3)
+
+-- Photon Sphere Radius
+
+calculatePhotonSphereRadius :: Floating a => a -> a
+calculatePhotonSphereRadius mass =
+  1.5 * calculateSchwarzschildRadius mass
+
+-- Star Lifetime
+
+calculateStarLifetimeInYears :: Floating a => a -> a -> a
+calculateStarLifetimeInYears starMass starLuminosity =
+  (starMass / starLuminosity) * sunLifetimeInYears
+
+calculateStarLifetimeFromLuminosityInYears :: Floating a => a -> a
+calculateStarLifetimeFromLuminosityInYears starLuminosity =
+  calculateStarLifetimeInYears starMass starLuminosity
+  where starMass = calculateStellarMassFromLuminosity starLuminosity
+
+calculateStarLifetimeFromMassInYears :: Floating a => a -> a
+calculateStarLifetimeFromMassInYears starMass =
+  calculateStarLifetimeInYears starMass starLuminosity
+  where starLuminosity = calculateStellarLuminosityFromMass starMass
+
+-- Habitable Zone
+
+-- Peak Wave Length
