@@ -10,6 +10,7 @@ type Force = Double
 type Factor = Double
 type Density = Double
 type Quantity = Double
+type Wavelength = Double
 type Unit = Char
 
 -- Constants
@@ -67,6 +68,15 @@ stefanBoltzmannConstant = 5.67e-8 -- W m^-2 K^-4
 
 hubblesConstant :: Fractional a => a
 hubblesConstant = 674e2 -- m/s/Mpc (as observed by the Planck satellite)
+
+wienDisplacementConstant :: Fractional a => a
+wienDisplacementConstant = 2.89777e-3
+
+innerStellarFlux :: Fractional a => a
+innerStellarFlux = 1.1
+
+outerStellarFlux :: Fractional a => a
+outerStellarFlux = 0.53
 
 -- Utility functions
 
@@ -202,7 +212,7 @@ calculateStarLifetimeInYears :: Mass -> Luminosity -> Time
 calculateStarLifetimeInYears starMass starLuminosity =
   (starMass / solarMass) / (starLuminosity / solarLuminosity) * solarLifetimeInYears
 
-calculateStarLifetimeFromLuminosityInYears :: Luminosity -> Time
+calculateStarLifetimeFromLuminosityInYears :: Luminosity -> Time 
 calculateStarLifetimeFromLuminosityInYears starLuminosity =
   calculateStarLifetimeInYears starMass starLuminosity
   where starMass = calculateStellarMassFromLuminosity starLuminosity
@@ -212,6 +222,23 @@ calculateStarLifetimeFromMassInYears starMass =
   calculateStarLifetimeInYears starMass starLuminosity
   where starLuminosity = calculateStellarLuminosityFromMass starMass
 
--- TODO: Habitable Zone
+-- Habitable Zone
 
--- TODO: Peak Wave Length
+calculateHabitableZone :: Luminosity -> (Distance, Distance)
+calculateHabitableZone solarLuminosity =
+  (calculateInnerHabitableZone solarLuminosity,
+  calculateOuterHabitableZone solarLuminosity)
+
+calculateInnerHabitableZone :: Luminosity -> Distance
+calculateInnerHabitableZone solarLuminosity =
+  sqrt(solarLuminosity/innerStellarFlux) * au
+
+calculateOuterHabitableZone :: Luminosity -> Distance
+calculateOuterHabitableZone solarLuminosity =
+  sqrt(solarLuminosity/outerStellarFlux) * au
+
+-- Wien's Displacement Law
+
+calculatePeakWavelength :: Temperature -> Wavelength
+calculatePeakWavelength blackBodyTemperature =
+  blackBodyTemperature / wienDisplacementConstant
