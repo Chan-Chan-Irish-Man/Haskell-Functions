@@ -1,3 +1,5 @@
+import Control.Monad (guard)
+
 -- Type Synonyms
 
 type Mass = Double
@@ -92,8 +94,8 @@ solarMassesToMilkyWayMasses :: Mass -> Mass
 solarMassesToMilkyWayMasses solarMasses =
   solarMasses / milkyWaySolarMasses
 
-convertPeriod :: Unit -> Time -> Time
-convertPeriod unit periodInSeconds =
+convertSecondsToUnit :: Unit -> Time -> Time
+convertSecondsToUnit unit periodInSeconds =
   case unit of
     's' -> periodInSeconds
     'm' -> periodInSeconds / secondsInAMinute
@@ -103,142 +105,217 @@ convertPeriod unit periodInSeconds =
     'y' -> periodInSeconds / secondsInAYear
     _   -> periodInSeconds
 
-howManyEarthMasses :: Mass -> Quantity
-howManyEarthMasses mass =
+toEarthMasses :: Mass -> Quantity
+toEarthMasses mass =
   mass / earthMass
 
-howManyAU :: Distance -> Quantity
-howManyAU meters =
+toAU :: Distance -> Quantity
+toAU meters =
   meters / au
 
 -- Swarzschild Radius
 
-calculateSchwarzschildRadius :: Mass -> Distance
-calculateSchwarzschildRadius mass =
-  (2 * gravitationalConstant * mass) / speedOfLight^2
+calculateSchwarzschildRadius :: Mass -> Maybe Distance
+calculateSchwarzschildRadius mass = do
+  guard(mass > 0)
+
+  return ((2 * gravitationalConstant * mass) / speedOfLight^2)
 
 -- Galaxy mass estimator
 
-estimateGalaxyMassVirial :: Velocity -> Distance -> Mass
-estimateGalaxyMassVirial stellarVelocityDispersion radiusLightYears =
-    (3 * stellarVelocityDispersion^2 * radiusMeters) / gravitationalConstant
-    where radiusMeters = lightYearsToMeters radiusLightYears
+estimateGalaxyMassVirial :: Velocity -> Distance -> Maybe Mass
+estimateGalaxyMassVirial stellarVelocityDispersion radiusLightYears = do
+  guard(stellarVelocityDispersion > 0)
+  guard(radiusLightYears > 0)
+
+  let radiusMeters = lightYearsToMeters radiusLightYears
+      result = (3 * stellarVelocityDispersion^2 * radiusMeters) / gravitationalConstant
+  return result
 
 -- Orbital Calculations
 
-calculateOrbitalPeriod :: Distance -> Mass -> Mass -> Time
-calculateOrbitalPeriod semiMajorAxis centralMass orbitingMass =
-    sqrt ((4 * pi^2 * semiMajorAxis^3) / (gravitationalConstant * (centralMass + orbitingMass)))
+calculateOrbitalPeriod :: Distance -> Mass -> Mass -> Maybe Time
+calculateOrbitalPeriod semiMajorAxis centralMass orbitingMass = do
+  guard(semiMajorAxis > 0)
+  guard(centralMass > 0)
+  guard(orbitingMass > 0)
 
-calculateOrbitalVelocity :: Distance -> Time -> Velocity
-calculateOrbitalVelocity semiMajorAxis orbitalPeriod =
-  (2 * pi * semiMajorAxis) / orbitalPeriod
+  return (sqrt((4 * pi^2 * semiMajorAxis^3) / (gravitationalConstant * (centralMass + orbitingMass))))
+
+calculateOrbitalVelocity :: Distance -> Time -> Maybe Velocity
+calculateOrbitalVelocity semiMajorAxis orbitalPeriod = do
+  guard(semiMajorAxis > 0)
+  guard(orbitalPeriod > 0)
+
+  return ((2 * pi * semiMajorAxis) / orbitalPeriod)
 
 -- Escape Velocity
 
-calculateEscapeVelocity :: Mass -> Distance -> Velocity
-calculateEscapeVelocity objectMass distanceFromObjectCenter =
-  sqrt ((2 * gravitationalConstant * objectMass) / distanceFromObjectCenter)
+calculateEscapeVelocity :: Mass -> Distance -> Maybe Velocity
+calculateEscapeVelocity objectMass distanceFromObjectCenter = do
+  guard(objectMass > 0)
+  guard(distanceFromObjectCenter > 0)
+
+  return (sqrt((2 * gravitationalConstant * objectMass) / distanceFromObjectCenter))
 
 -- Tidal Force
 
-calculateTidalForce :: Mass -> Mass -> Distance -> Distance -> Force
+calculateTidalForce :: Mass -> Mass -> Distance -> Distance -> Maybe Force
 calculateTidalForce largerObjectMass smallerObjectMass
                     differenceBetweenTwoPointsOnSmallerObject
-                    distanceBetweenCenterOfBothObjects =
-  (2 * gravitationalConstant * largerObjectMass *
-  smallerObjectMass * differenceBetweenTwoPointsOnSmallerObject)
-  / distanceBetweenCenterOfBothObjects^3
+                    distanceBetweenCenterOfBothObjects = do
+  guard(largerObjectMass > 0)
+  guard(smallerObjectMass > 0)
+  guard(differenceBetweenTwoPointsOnSmallerObject > 0)
+  guard(distanceBetweenCenterOfBothObjects > 0)
+  
+  return ((2 * gravitationalConstant * largerObjectMass *
+               smallerObjectMass * differenceBetweenTwoPointsOnSmallerObject)
+               / distanceBetweenCenterOfBothObjects^3)
 
 -- Luminosity
 
-calculateLuminosity :: Distance -> Temperature -> Luminosity
-calculateLuminosity starRadius starSurfaceTemperature =
-  4 * pi * starRadius^2 * stefanBoltzmannConstant * starSurfaceTemperature^4
+calculateLuminosity :: Distance -> Temperature -> Maybe Luminosity
+calculateLuminosity starRadius starSurfaceTemperature = do
+  guard(starRadius > 0)
+  guard(starSurfaceTemperature > 0)
 
-calculateLuminosityInSolarUnits :: Distance -> Temperature -> Luminosity
-calculateLuminosityInSolarUnits starRadius starSurfaceTemperature =
-  calculateLuminosity starRadius starSurfaceTemperature / solarLuminosity
+  return (4 * pi * starRadius^2 * 
+          stefanBoltzmannConstant * starSurfaceTemperature^4)
+
+calculateLuminosityInSolarUnits :: Distance -> Temperature -> Maybe Luminosity
+calculateLuminosityInSolarUnits starRadius starSurfaceTemperature = do
+  guard(starRadius > 0)
+  guard(starSurfaceTemperature > 0)
+
+  luminosity <- calculateLuminosity starRadius starSurfaceTemperature
+  return (luminosity / solarLuminosity)
 
 -- Hubble Expansion
 
-calculateHubbleExpansion :: Distance -> Velocity
-calculateHubbleExpansion properDistance =
-  hubblesConstant * properDistance
+calculateHubbleExpansion :: Distance -> Maybe Velocity
+calculateHubbleExpansion properDistance = do
+  guard(properDistance > 0)
+
+  return (hubblesConstant * properDistance)
 
 -- Stellar Mass From Luminosity
 
-calculateStellarMassFromLuminosity :: Luminosity -> Mass
-calculateStellarMassFromLuminosity luminosity =
-  solarMass * (luminosity / solarLuminosity) ** (1/3.5)
+calculateStellarMassFromLuminosity :: Luminosity -> Maybe Mass
+calculateStellarMassFromLuminosity luminosity = do
+  guard(luminosity > 0)
+
+  return (solarMass * (luminosity / solarLuminosity) ** (1/3.5))
 
 -- Luminosity from Stellar Mass
 
-calculateStellarLuminosityFromMass :: Mass -> Luminosity
-calculateStellarLuminosityFromMass mass =
-  solarLuminosity * (mass / solarMass) ** 3.5
+calculateStellarLuminosityFromMass :: Mass -> Maybe Luminosity
+calculateStellarLuminosityFromMass mass = do
+  guard(mass > 0)
+
+  return (solarLuminosity * (mass / solarMass) ** 3.5)
 
 -- Gravitational Time Dilation
 
-calculateGravitationalTimeDilationFactor :: Mass -> Distance -> Factor
-calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter =
-  sqrt (1 - (2 * gravitationalConstant * mass) / (distanceFromObjectCenter * speedOfLight^2))
+calculateGravitationalTimeDilationFactor :: Mass -> Distance -> Maybe Factor
+calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter = do
+  guard (mass > 0)
+  guard (distanceFromObjectCenter > 0)
+  let schwartzschildRadius = (2 * gravitationalConstant * mass) / speedOfLight^2
+  guard (distanceFromObjectCenter > schwartzschildRadius)
 
-calculateDilatedTime :: Time -> Mass -> Distance -> Time
-calculateDilatedTime timeInterval mass distanceFromObjectCenter =
-  timeInterval * calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter
+  return (sqrt(1 - (2 * gravitationalConstant * mass) / (distanceFromObjectCenter * speedOfLight^2)))
+
+calculateDilatedTime :: Time -> Mass -> Distance -> Maybe Time
+calculateDilatedTime timeInterval mass distanceFromObjectCenter = do
+  guard (timeInterval > 0)
+  factor <- calculateGravitationalTimeDilationFactor mass distanceFromObjectCenter
+  
+  return (timeInterval * factor)
 
 -- Lorentz Factor
 
-calculateLorentzFactor :: Velocity -> Factor
-calculateLorentzFactor speedOfMovingObserver =
-  1 / sqrt(1 - (speedOfMovingObserver^2/speedOfLight^2))
+calculateLorentzFactor :: Velocity -> Maybe Factor
+calculateLorentzFactor speedOfMovingObserver = do
+  guard(speedOfMovingObserver > 0)
+  guard(speedOfMovingObserver <= speedOfLight)
+
+  return (1 / sqrt(1 - (speedOfMovingObserver^2/speedOfLight^2)))
 
 -- Roche Limit
 
-calculateRocheLimit :: Distance -> Density -> Density -> Distance
-calculateRocheLimit primaryBodyRadius primaryBodyDensity satelliteDensity =
-  primaryBodyRadius * ((2 * primaryBodyDensity) / satelliteDensity) ** (1/3)
+calculateRocheLimit :: Distance -> Density -> Density -> Maybe Distance
+calculateRocheLimit primaryBodyRadius primaryBodyDensity satelliteDensity = do
+  guard(primaryBodyRadius > 0)
+  guard(primaryBodyDensity > 0)
+  guard(satelliteDensity > 0)
+
+  return (primaryBodyRadius * ((2 * primaryBodyDensity) / satelliteDensity) ** (1/3))
 
 -- Photon Sphere Radius
 
-calculatePhotonSphereRadius :: Mass -> Distance
-calculatePhotonSphereRadius mass =
-  1.5 * calculateSchwarzschildRadius mass
+calculatePhotonSphereRadius :: Mass -> Maybe Distance
+calculatePhotonSphereRadius mass = do
+  guard(mass > 0)
+
+  schwarzschildRadius <- calculateSchwarzschildRadius mass
+
+  return (1.5 * schwarzschildRadius)
 
 -- Star Lifetime
 
-calculateStarLifetimeInYears :: Mass -> Luminosity -> Time
-calculateStarLifetimeInYears starMass starLuminosity =
-  (starMass / solarMass) / (starLuminosity / solarLuminosity) * solarLifetimeInYears
+calculateStarLifetimeInYears :: Mass -> Luminosity -> Maybe Time
+calculateStarLifetimeInYears starMass starLuminosity = do
+  guard(starMass > 0)
+  guard(starLuminosity > 0)
 
-calculateStarLifetimeFromLuminosityInYears :: Luminosity -> Time 
-calculateStarLifetimeFromLuminosityInYears starLuminosity =
-  calculateStarLifetimeInYears starMass starLuminosity
-  where starMass = calculateStellarMassFromLuminosity starLuminosity
+  return ((starMass / solarMass) / (starLuminosity / solarLuminosity) * solarLifetimeInYears)
 
-calculateStarLifetimeFromMassInYears :: Mass -> Time
-calculateStarLifetimeFromMassInYears starMass =
-  calculateStarLifetimeInYears starMass starLuminosity
-  where starLuminosity = calculateStellarLuminosityFromMass starMass
+calculateStarLifetimeFromLuminosityInYears :: Luminosity -> Maybe Time 
+calculateStarLifetimeFromLuminosityInYears starLuminosity = do
+  guard(starLuminosity > 0)
+
+  starMass <- calculateStellarMassFromLuminosity starLuminosity
+  starLifetimeInYears <- calculateStarLifetimeInYears starMass starLuminosity
+
+  return starLifetimeInYears
+
+calculateStarLifetimeFromMassInYears :: Mass -> Maybe Time
+calculateStarLifetimeFromMassInYears starMass = do
+  guard(starMass > 0)
+
+  starLuminosity <- calculateStellarLuminosityFromMass starMass
+  starLifetime <- calculateStarLifetimeInYears starMass starLuminosity
+  
+  return starLifetime
 
 -- Habitable Zone
 
-calculateHabitableZone :: Luminosity -> (Distance, Distance)
-calculateHabitableZone solarLuminosity =
-  (calculateInnerHabitableZone solarLuminosity,
-  calculateOuterHabitableZone solarLuminosity)
+calculateHabitableZone :: Luminosity -> Maybe (Distance, Distance)
+calculateHabitableZone solarLuminosity = do
+  guard(solarLuminosity > 0)
 
-calculateInnerHabitableZone :: Luminosity -> Distance
-calculateInnerHabitableZone solarLuminosity =
-  sqrt(solarLuminosity/innerStellarFlux) * au
+  innerHabitableZone <- calculateInnerHabitableZone solarLuminosity
+  outerHabitableZone <- calculateOuterHabitableZone solarLuminosity
 
-calculateOuterHabitableZone :: Luminosity -> Distance
-calculateOuterHabitableZone solarLuminosity =
-  sqrt(solarLuminosity/outerStellarFlux) * au
+  return (innerHabitableZone, outerHabitableZone)
+
+calculateInnerHabitableZone :: Luminosity -> Maybe Distance
+calculateInnerHabitableZone solarLuminosity = do
+  guard(solarLuminosity > 0)
+
+  return (sqrt(solarLuminosity/innerStellarFlux) * au)
+
+calculateOuterHabitableZone :: Luminosity -> Maybe Distance
+calculateOuterHabitableZone solarLuminosity = do
+  guard(solarLuminosity > 0)
+
+  return (sqrt(solarLuminosity/outerStellarFlux) * au)
 
 -- Wien's Displacement Law
 
-calculatePeakWavelength :: Temperature -> Wavelength
-calculatePeakWavelength blackBodyTemperature =
-  blackBodyTemperature / wienDisplacementConstant
+calculatePeakWavelength :: Temperature -> Maybe Wavelength
+calculatePeakWavelength blackBodyTemperature = do
+  guard(blackBodyTemperature > 0)
+
+  return (blackBodyTemperature / wienDisplacementConstant)
