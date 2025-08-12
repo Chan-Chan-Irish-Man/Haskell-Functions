@@ -1,7 +1,7 @@
 module Astro.BlackHoles where
   import Control.Monad (guard)
-  import Constants
-  import Synonyms
+  import Astro.Constants
+  import Astro.Synonyms
 
   -- Calculate Schwarzschild Radius
 

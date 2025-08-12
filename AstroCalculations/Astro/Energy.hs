@@ -1,6 +1,6 @@
 module Astro.Energy where
-  import Constants
-  import Synonyms
+  import Astro.Constants
+  import Astro.Synonyms
 
   -- Wien's Displacement Law
 

@@ -1,7 +1,7 @@
 module Astro.Utilities where
   import Control.Monad (guard)
-  import Constants
-  import Synonyms
+  import Astro.Constants
+  import Astro.Synonyms
 
   lightYearsToMeters :: Distance -> Distance
   lightYearsToMeters lightYears =

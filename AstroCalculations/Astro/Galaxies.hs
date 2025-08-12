@@ -1,7 +1,7 @@
 module Astro.Galaxies where
   import Control.Monad (guard)
-  import Constants
-  import Synonyms
+  import Astro.Constants
+  import Astro.Synonyms
 
   estimateGalaxyMassVirial :: Velocity -> Distance -> Maybe Mass
   estimateGalaxyMassVirial stellarVelocityDispersion radiusLightYears = do

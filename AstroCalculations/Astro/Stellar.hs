@@ -1,6 +1,6 @@
 module Astro.Stellar where
-  import Constants
-  import Synonyms
+  import Astro.Constants
+  import Astro.Synonyms
 
   -- Stefan-Boltzmann Law for Luminosity
 
