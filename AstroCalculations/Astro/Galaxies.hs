@@ -6,8 +6,8 @@ module Astro.Galaxies where
 
   estimateGalaxyMassVirial :: Velocity -> Distance -> Maybe Mass
   estimateGalaxyMassVirial stellarVelocityDispersion radiusLightYears = do
-    guard(stellarVelocityDispersion > 0)
-    guard(radiusLightYears > 0)
+    guard (stellarVelocityDispersion > 0)
+    guard (radiusLightYears > 0)
 
     let radiusMeters = lightYearsToMeters radiusLightYears
         result = (3 * stellarVelocityDispersion^2 * radiusMeters) / gravitationalConstant
@@ -17,6 +17,6 @@ module Astro.Galaxies where
 
   calculateHubbleExpansion :: Distance -> Maybe Velocity
   calculateHubbleExpansion properDistance = do
-    guard(properDistance > 0)
+    guard (properDistance > 0)
 
     return (hubblesConstant * properDistance)

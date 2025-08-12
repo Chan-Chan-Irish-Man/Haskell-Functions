@@ -7,7 +7,7 @@ module Astro.BlackHoles where
 
   calculateSchwarzschildRadius :: Mass -> Maybe Distance
   calculateSchwarzschildRadius mass = do
-    guard(mass > 0)
+    guard (mass > 0)
 
     return ((2 * gravitationalConstant * mass) / speedOfLight^2)
 
@@ -15,7 +15,7 @@ module Astro.BlackHoles where
 
   calculatePhotonSphereRadius :: Mass -> Maybe Distance
   calculatePhotonSphereRadius mass = do
-    guard(mass > 0)
+    guard (mass > 0)
 
     schwarzschildRadius <- calculateSchwarzschildRadius mass
 

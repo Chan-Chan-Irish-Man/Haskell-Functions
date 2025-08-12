@@ -3,13 +3,22 @@ module Astro.Orbitals where
   import Astro.Constants
   import Astro.Synonyms
 
+  -- Newton's Law of Universal Gravitation
+
+  calculateUniversalGravitation firstObjectMass secondObjectMass distanceBetweenCenterOfBothObjects = do
+    guard (firstObjectMass > 0)
+    guard (secondObjectMass > 0)
+    guard (distanceBetweenCenterOfBothObjects > 0)
+
+    return (gravitationalConstant * ((firstObjectMass * secondObjectMass) / distanceBetweenCenterOfBothObjects^2))
+
   -- Calculate Orbital Period
 
   calculateOrbitalPeriod :: Distance -> Mass -> Mass -> Maybe Time
   calculateOrbitalPeriod semiMajorAxis centralMass orbitingMass = do
-    guard(semiMajorAxis > 0)
-    guard(centralMass > 0)
-    guard(orbitingMass > 0)
+    guard (semiMajorAxis > 0)
+    guard (centralMass > 0)
+    guard (orbitingMass > 0)
 
     return (sqrt((4 * pi^2 * semiMajorAxis^3) / (gravitationalConstant * (centralMass + orbitingMass))))
 
@@ -17,8 +26,8 @@ module Astro.Orbitals where
 
   calculateOrbitalVelocity :: Distance -> Time -> Maybe Velocity
   calculateOrbitalVelocity semiMajorAxis orbitalPeriod = do
-    guard(semiMajorAxis > 0)
-    guard(orbitalPeriod > 0)
+    guard (semiMajorAxis > 0)
+    guard (orbitalPeriod > 0)
 
     return ((2 * pi * semiMajorAxis) / orbitalPeriod)
 
@@ -26,8 +35,8 @@ module Astro.Orbitals where
 
   calculateEscapeVelocity :: Mass -> Distance -> Maybe Velocity
   calculateEscapeVelocity objectMass distanceFromObjectCenter = do
-    guard(objectMass > 0)
-    guard(distanceFromObjectCenter > 0)
+    guard (objectMass > 0)
+    guard (distanceFromObjectCenter > 0)
 
     return (sqrt((2 * gravitationalConstant * objectMass) / distanceFromObjectCenter))
 
@@ -37,10 +46,10 @@ module Astro.Orbitals where
   calculateTidalForce largerObjectMass smallerObjectMass
                       differenceBetweenTwoPointsOnSmallerObject
                       distanceBetweenCenterOfBothObjects = do
-    guard(largerObjectMass > 0)
-    guard(smallerObjectMass > 0)
-    guard(differenceBetweenTwoPointsOnSmallerObject > 0)
-    guard(distanceBetweenCenterOfBothObjects > 0)
+    guard (largerObjectMass > 0)
+    guard (smallerObjectMass > 0)
+    guard (differenceBetweenTwoPointsOnSmallerObject > 0)
+    guard (distanceBetweenCenterOfBothObjects > 0)
     
     return ((2 * gravitationalConstant * largerObjectMass *
                 smallerObjectMass * differenceBetweenTwoPointsOnSmallerObject)
@@ -50,7 +59,7 @@ module Astro.Orbitals where
 
   calculateHabitableZone :: Luminosity -> Maybe (Distance, Distance)
   calculateHabitableZone solarLuminosity = do
-    guard(solarLuminosity > 0)
+    guard (solarLuminosity > 0)
 
     innerHabitableZone <- calculateInnerHabitableZone solarLuminosity
     outerHabitableZone <- calculateOuterHabitableZone solarLuminosity
@@ -59,13 +68,13 @@ module Astro.Orbitals where
 
   calculateInnerHabitableZone :: Luminosity -> Maybe Distance
   calculateInnerHabitableZone solarLuminosity = do
-    guard(solarLuminosity > 0)
+    guard (solarLuminosity > 0)
 
     return (sqrt(solarLuminosity/innerStellarFlux) * au)
 
   calculateOuterHabitableZone :: Luminosity -> Maybe Distance
   calculateOuterHabitableZone solarLuminosity = do
-    guard(solarLuminosity > 0)
+    guard (solarLuminosity > 0)
 
     return (sqrt(solarLuminosity/outerStellarFlux) * au)
 
@@ -91,8 +100,8 @@ module Astro.Orbitals where
 
   calculateLorentzFactor :: Velocity -> Maybe Factor
   calculateLorentzFactor speedOfMovingObserver = do
-    guard(speedOfMovingObserver > 0)
-    guard(speedOfMovingObserver <= speedOfLight)
+    guard (speedOfMovingObserver > 0)
+    guard (speedOfMovingObserver <= speedOfLight)
 
     return (1 / sqrt(1 - (speedOfMovingObserver^2/speedOfLight^2)))
 
@@ -100,9 +109,9 @@ module Astro.Orbitals where
 
   calculateRocheLimit :: Distance -> Density -> Density -> Maybe Distance
   calculateRocheLimit primaryBodyRadius primaryBodyDensity satelliteDensity = do
-    guard(primaryBodyRadius > 0)
-    guard(primaryBodyDensity > 0)
-    guard(satelliteDensity > 0)
+    guard (primaryBodyRadius > 0)
+    guard (primaryBodyDensity > 0)
+    guard (satelliteDensity > 0)
 
     return (primaryBodyRadius * ((2 * primaryBodyDensity) / satelliteDensity) ** (1/3))
 
@@ -110,9 +119,9 @@ module Astro.Orbitals where
 
   calculateVisaViva :: Mass -> Distance -> Distance -> Maybe Velocity
   calculateVisaViva centralMass distanceFromCenterOfCentralMassAndOrbitingBody semiMajorAxis = do
-    guard(centralMass > 0)
-    guard(distanceFromCenterOfCentralMassAndOrbitingBody > 0)
-    guard(semiMajorAxis > 0)
+    guard (centralMass > 0)
+    guard (distanceFromCenterOfCentralMassAndOrbitingBody > 0)
+    guard (semiMajorAxis > 0)
 
     return (sqrt(gravitationalConstant * centralMass * 
           (2 / distanceFromCenterOfCentralMassAndOrbitingBody -
