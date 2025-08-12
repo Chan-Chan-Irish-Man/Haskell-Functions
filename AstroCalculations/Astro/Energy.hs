@@ -1,4 +1,5 @@
 module Astro.Energy where
+  import Control.Monad (guard)
   import Astro.Constants
   import Astro.Synonyms
 
